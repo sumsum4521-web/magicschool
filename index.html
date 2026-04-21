@@ -1,109 +1,149 @@
-
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>마법학교생활 선택게임</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  #game-root { min-height: 520px; font-family: var(--font-sans); }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4ef; min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
+  #app { width: 100%; max-width: 680px; }
+
+  /* CSS 변수 대체 */
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f4ef;
+    --bg-tertiary: #eeede8;
+    --text-primary: #1a1a18;
+    --text-secondary: #6b6b67;
+    --border: rgba(0,0,0,0.12);
+    --border-md: rgba(0,0,0,0.2);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1e1e1c;
+      --bg-secondary: #2a2a27;
+      --bg-tertiary: #111110;
+      --text-primary: #f0efe8;
+      --text-secondary: #9a9a94;
+      --border: rgba(255,255,255,0.12);
+      --border-md: rgba(255,255,255,0.22);
+    }
+  }
+
+  #game-root { min-height: 520px; }
   .screen { display: none; } .screen.active { display: block; }
-  #lobby { text-align: center; padding: 2.5rem 1.5rem 2rem; background: linear-gradient(160deg, #EEEDFE 0%, #E1F5EE 100%); border-radius: var(--border-radius-lg); position: relative; }
+
+  /* LOBBY */
+  #lobby { text-align: center; padding: 2.5rem 1.5rem 2rem; background: linear-gradient(160deg, #EEEDFE 0%, #E1F5EE 100%); border-radius: var(--radius-lg); position: relative; }
   .title-main { font-size: 28px; font-weight: 500; color: #3C3489; letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 6px; }
   .title-sub { font-size: 13px; color: #534AB7; margin-bottom: 2rem; }
   .stars { font-size: 20px; margin-bottom: 1.5rem; }
   .lobby-btn { display: block; width: 220px; margin: 0 auto 12px; padding: 12px 0; border-radius: 999px; font-size: 15px; font-weight: 500; cursor: pointer; border: none; transition: transform 0.1s; }
   .lobby-btn:active { transform: scale(0.97); }
   .btn-play { background: #534AB7; color: #fff; }
-  .btn-chars { background: #fff; color: #3C3489; border: 1.5px solid #AFA9EC; }
-  .btn-cuts { background: #fff; color: #0F6E56; border: 1.5px solid #9FE1CB; }
-  .btn-intimacy { background: #fff; color: #993C1D; border: 1.5px solid #F5C4B3; }
+  .btn-chars { background: var(--bg-primary); color: #3C3489; border: 1.5px solid #AFA9EC; }
+  .btn-cuts { background: var(--bg-primary); color: #0F6E56; border: 1.5px solid #9FE1CB; }
+  .btn-intimacy { background: var(--bg-primary); color: #993C1D; border: 1.5px solid #F5C4B3; }
   .rebirth-btn { position: absolute; top: 12px; right: 12px; background: none; border: 1px solid #F0997B; border-radius: 999px; padding: 5px 12px; font-size: 12px; color: #993C1D; cursor: pointer; transition: background 0.1s; }
   .rebirth-btn:hover { background: #FAECE7; }
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); align-items: center; justify-content: center; z-index: 99; }
+
+  /* MODALS */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); align-items: center; justify-content: center; z-index: 99; }
   .modal-overlay.open { display: flex; }
-  .modal-box { background: var(--color-background-primary); border-radius: var(--border-radius-lg); padding: 1.5rem; width: 300px; }
+  .modal-box { background: var(--bg-primary); border-radius: var(--radius-lg); padding: 1.5rem; width: 300px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
   .modal-step { display: none; } .modal-step.active { display: block; }
-  .modal-box p { font-size: 15px; font-weight: 500; margin-bottom: 12px; text-align: center; color: var(--color-text-primary); }
-  .modal-box .sub-p { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 14px; text-align: center; margin-top: -6px; }
-  .modal-box input { width: 100%; padding: 10px 12px; border-radius: var(--border-radius-md); border: 1px solid var(--color-border-secondary); font-size: 15px; margin-bottom: 12px; color: var(--color-text-primary); background: var(--color-background-primary); }
+  .modal-box p { font-size: 15px; font-weight: 500; margin-bottom: 12px; text-align: center; color: var(--text-primary); }
+  .modal-box .sub-p { font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; text-align: center; margin-top: -6px; }
+  .modal-box input { width: 100%; padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid var(--border-md); font-size: 15px; margin-bottom: 12px; color: var(--text-primary); background: var(--bg-primary); outline: none; }
+  .modal-box input:focus { border-color: #534AB7; box-shadow: 0 0 0 2px rgba(83,74,183,0.15); }
   .modal-confirm { width: 100%; padding: 10px; background: #534AB7; color: #fff; border: none; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; }
   .gender-btns { display: flex; gap: 8px; margin-bottom: 12px; }
-  .gender-btn { flex: 1; padding: 14px 0; border-radius: var(--border-radius-lg); border: 1.5px solid var(--color-border-secondary); background: var(--color-background-primary); font-size: 22px; cursor: pointer; transition: border-color 0.1s, background 0.1s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-  .gender-btn span { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); }
+  .gender-btn { flex: 1; padding: 14px 0; border-radius: var(--radius-lg); border: 1.5px solid var(--border-md); background: var(--bg-primary); font-size: 22px; cursor: pointer; transition: border-color 0.1s, background 0.1s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .gender-btn span { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
   .gender-btn.selected { border-color: #534AB7; background: #EEEDFE; }
   .gender-btn.selected span { color: #534AB7; }
-  .gender-warn { display: none; background: #FAEEDA; border: 1px solid #EF9F27; border-radius: var(--border-radius-md); padding: 8px 10px; font-size: 11px; color: #633806; line-height: 1.5; margin-bottom: 12px; text-align: center; }
+  .gender-warn { display: none; background: #FAEEDA; border: 1px solid #EF9F27; border-radius: var(--radius-md); padding: 8px 10px; font-size: 11px; color: #633806; line-height: 1.5; margin-bottom: 12px; text-align: center; }
   .gender-warn.show { display: block; }
-  .rebirth-box { background: var(--color-background-primary); border-radius: var(--border-radius-lg); padding: 1.5rem; width: 280px; text-align: center; }
-  .rebirth-box .rebirth-emoji { font-size: 32px; margin-bottom: 10px; }
-  .rebirth-box p { font-size: 14px; color: var(--color-text-primary); line-height: 1.6; margin-bottom: 8px; }
-  .rebirth-box .warn { font-size: 12px; color: #993C1D; margin-bottom: 16px; }
+  .rebirth-box, .back-confirm-box { background: var(--bg-primary); border-radius: var(--radius-lg); padding: 1.5rem; width: 280px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+  .rebirth-box .rebirth-emoji, .back-confirm-box .back-emoji { font-size: 32px; margin-bottom: 10px; }
+  .rebirth-box p, .back-confirm-box p { font-size: 14px; color: var(--text-primary); line-height: 1.6; margin-bottom: 8px; }
+  .rebirth-box .warn, .back-confirm-box .warn { font-size: 12px; color: #993C1D; margin-bottom: 16px; }
   .rebirth-confirm { width: 100%; padding: 10px; background: #D85A30; color: #fff; border: none; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 8px; }
-  .rebirth-cancel { width: 100%; padding: 10px; background: none; color: var(--color-text-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: 999px; font-size: 14px; cursor: pointer; }
-  .back-confirm-box { background: var(--color-background-primary); border-radius: var(--border-radius-lg); padding: 1.5rem; width: 260px; text-align: center; }
-  .back-confirm-box .back-emoji { font-size: 28px; margin-bottom: 10px; }
-  .back-confirm-box p { font-size: 14px; color: var(--color-text-primary); line-height: 1.6; margin-bottom: 6px; }
-  .back-confirm-box .warn { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 16px; }
+  .rebirth-cancel, .back-cancel-btn { width: 100%; padding: 10px; background: none; color: var(--text-secondary); border: 0.5px solid var(--border-md); border-radius: 999px; font-size: 14px; cursor: pointer; }
   .back-go-btn { width: 100%; padding: 10px; background: #534AB7; color: #fff; border: none; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 8px; }
-  .back-cancel-btn { width: 100%; padding: 10px; background: none; color: var(--color-text-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: 999px; font-size: 14px; cursor: pointer; }
+
+  /* ROOMS */
   #chars, #cuts, #intimacy { padding: 1rem; }
   .room-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
-  .back-btn { background: none; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 6px 12px; font-size: 13px; cursor: pointer; color: var(--color-text-secondary); }
-  .room-title { font-size: 17px; font-weight: 500; color: var(--color-text-primary); }
+  .back-btn { background: none; border: 0.5px solid var(--border-md); border-radius: var(--radius-md); padding: 6px 12px; font-size: 13px; cursor: pointer; color: var(--text-secondary); }
+  .room-title { font-size: 17px; font-weight: 500; color: var(--text-primary); }
   .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-  .char-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 12px; text-align: center; }
+  .char-card { background: var(--bg-primary); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 12px; text-align: center; }
   .char-avatar { width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
-  .char-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 3px; }
+  .char-name { font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; }
   .char-tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; margin-bottom: 5px; background: #EEEDFE; color: #3C3489; }
-  .char-desc { font-size: 11px; color: var(--color-text-secondary); line-height: 1.5; }
+  .char-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
   .cuts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-  .cut-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px 12px; text-align: center; position: relative; }
+  .cut-card { background: var(--bg-primary); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px 12px; text-align: center; position: relative; }
   .cut-card.unlocked { border-color: #9FE1CB; background: #E1F5EE; }
   .cut-icon { font-size: 28px; margin-bottom: 6px; }
-  .cut-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 3px; }
-  .cut-name.hidden-text { color: var(--color-text-secondary); }
+  .cut-name { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; }
+  .cut-name.hidden-text { color: var(--text-secondary); }
   .cut-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 999px; margin-top: 4px; background: #9FE1CB; color: #085041; }
-  .cut-locked-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 999px; margin-top: 4px; background: var(--color-background-secondary); color: var(--color-text-secondary); }
+  .cut-locked-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 999px; margin-top: 4px; background: var(--bg-tertiary); color: var(--text-secondary); }
   .new-badge { position: absolute; top: 8px; right: 8px; background: #D85A30; color: #fff; font-size: 9px; font-weight: 500; padding: 2px 6px; border-radius: 999px; }
   .intimacy-list { display: flex; flex-direction: column; gap: 10px; }
-  .intimacy-row { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+  .intimacy-row { background: var(--bg-primary); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
   .intimacy-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
   .intimacy-info { flex: 1; }
-  .intimacy-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 5px; }
-  .intimacy-bar-wrap { background: var(--color-background-secondary); border-radius: 999px; height: 8px; width: 100%; overflow: hidden; }
+  .intimacy-name { font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 5px; }
+  .intimacy-bar-wrap { background: var(--bg-tertiary); border-radius: 999px; height: 8px; width: 100%; overflow: hidden; }
   .intimacy-bar { height: 8px; border-radius: 999px; background: #534AB7; transition: width 0.4s; }
-  .intimacy-num { font-size: 12px; color: var(--color-text-secondary); white-space: nowrap; }
+  .intimacy-num { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
   .special-ep-tag { font-size: 10px; padding: 2px 8px; border-radius: 999px; background: #FAEEDA; color: #854F0B; margin-left: 6px; }
+
+  /* GAME */
   #game { padding: 1rem; }
   .scene-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
   .scene-header-left { display: flex; flex-direction: column; gap: 2px; }
-  .episode-label { font-size: 12px; color: var(--color-text-secondary); }
-  .episode-title { font-size: 16px; font-weight: 500; color: var(--color-text-primary); }
-  .game-back-btn { background: none; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 5px 10px; font-size: 12px; cursor: pointer; color: var(--color-text-secondary); white-space: nowrap; flex-shrink: 0; }
-  .game-back-btn:hover { background: var(--color-background-secondary); }
-  .scene-box { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 1rem 1.2rem; margin-bottom: 1rem; min-height: 80px; }
-  .scene-text { font-size: 14px; color: var(--color-text-primary); line-height: 1.75; }
+  .episode-label { font-size: 12px; color: var(--text-secondary); }
+  .episode-title { font-size: 16px; font-weight: 500; color: var(--text-primary); }
+  .game-back-btn { background: none; border: 0.5px solid var(--border-md); border-radius: var(--radius-md); padding: 5px 10px; font-size: 12px; cursor: pointer; color: var(--text-secondary); white-space: nowrap; flex-shrink: 0; }
+  .game-back-btn:hover { background: var(--bg-secondary); }
+  .scene-box { background: var(--bg-secondary); border-radius: var(--radius-lg); padding: 1rem 1.2rem; margin-bottom: 1rem; min-height: 80px; }
+  .scene-text { font-size: 14px; color: var(--text-primary); line-height: 1.75; }
   .scene-text .pname { color: #534AB7; font-weight: 500; }
   .choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
-  .choice-btn { background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-lg); padding: 12px 14px; text-align: left; font-size: 13px; cursor: pointer; color: var(--color-text-primary); transition: background 0.1s; }
+  .choice-btn { background: var(--bg-primary); border: 0.5px solid var(--border-md); border-radius: var(--radius-lg); padding: 12px 14px; text-align: left; font-size: 13px; cursor: pointer; color: var(--text-primary); transition: background 0.1s; }
   .choice-btn:hover { background: #EEEDFE; border-color: #AFA9EC; }
   .choice-btn.chosen { background: #EEEDFE; border-color: #534AB7; }
   .choice-btn.disabled { opacity: 0.4; pointer-events: none; }
-  .result-box { display: none; background: #E1F5EE; border-left: 3px solid #1D9E75; border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0; padding: 10px 14px; font-size: 13px; color: #085041; line-height: 1.6; margin-bottom: 0.5rem; }
+  .result-box { display: none; background: #E1F5EE; border-left: 3px solid #1D9E75; border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: 10px 14px; font-size: 13px; color: #085041; line-height: 1.6; margin-bottom: 0.5rem; }
   .result-box.show { display: block; }
-  .cut-notify { display: none; background: #E1F5EE; border: 1px solid #5DCAA5; border-radius: var(--border-radius-md); padding: 8px 12px; font-size: 12px; color: #085041; margin-bottom: 0.5rem; }
+  .cut-notify { display: none; background: #E1F5EE; border: 1px solid #5DCAA5; border-radius: var(--radius-md); padding: 8px 12px; font-size: 12px; color: #085041; margin-bottom: 0.5rem; }
   .cut-notify.show { display: block; }
   .sub-choices { display: none; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
   .sub-choices.show { display: flex; }
-  .sub-choice-btn { background: var(--color-background-primary); border: 1.5px solid #AFA9EC; border-radius: var(--border-radius-lg); padding: 10px 14px; text-align: left; font-size: 13px; cursor: pointer; color: #534AB7; font-weight: 500; }
+  .sub-choice-btn { background: var(--bg-primary); border: 1.5px solid #AFA9EC; border-radius: var(--radius-lg); padding: 10px 14px; text-align: left; font-size: 13px; cursor: pointer; color: #534AB7; font-weight: 500; }
   .sub-choice-btn:hover { background: #EEEDFE; }
   .sub-choice-btn.chosen { background: #EEEDFE; border-color: #534AB7; }
   .sub-choice-btn.disabled { opacity: 0.4; pointer-events: none; }
-  .sub-result-box { display: none; background: #E6F1FB; border-left: 3px solid #378ADD; border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0; padding: 10px 14px; font-size: 13px; color: #0C447C; line-height: 1.6; margin-bottom: 0.5rem; }
+  .sub-result-box { display: none; background: #E6F1FB; border-left: 3px solid #378ADD; border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: 10px 14px; font-size: 13px; color: #0C447C; line-height: 1.6; margin-bottom: 0.5rem; }
   .sub-result-box.show { display: block; }
   .next-btn { background: #534AB7; color: #fff; border: none; border-radius: 999px; padding: 10px 24px; font-size: 14px; font-weight: 500; cursor: pointer; display: none; margin-top: 0.5rem; }
   .next-btn.show { display: inline-block; }
   .progress-dots { display: flex; gap: 6px; flex-wrap: wrap; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-border-secondary); transition: background 0.3s; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border-md); transition: background 0.3s; }
   .dot.done { background: #534AB7; } .dot.current { background: #9F9AE0; }
+
+  /* DAYEND */
   #dayend { padding: 1rem; }
-  .dayend-card { background: linear-gradient(160deg, #EEEDFE 0%, #E1F5EE 100%); border-radius: var(--border-radius-lg); padding: 2rem 1.5rem; text-align: center; margin-bottom: 1rem; }
+  .dayend-card { background: linear-gradient(160deg, #EEEDFE 0%, #E1F5EE 100%); border-radius: var(--radius-lg); padding: 2rem 1.5rem; text-align: center; margin-bottom: 1rem; }
   .dayend-emoji { font-size: 36px; margin-bottom: 0.75rem; }
   .dayend-title { font-size: 20px; font-weight: 500; color: #3C3489; margin-bottom: 8px; }
   .dayend-msg { font-size: 13px; color: #534AB7; line-height: 1.7; white-space: pre-line; }
@@ -111,7 +151,9 @@
   .dayend-next.show { display: block; }
   .dayend-restart { width: 100%; padding: 13px; background: none; color: #534AB7; border: 1px solid #AFA9EC; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; }
 </style>
-
+</head>
+<body>
+<div id="app">
 <div id="game-root">
   <div id="lobby" class="screen active">
     <button class="rebirth-btn" id="rebirth-btn">🔄 환생</button>
@@ -165,6 +207,7 @@
     <button class="dayend-next" id="dayend-next">다음 날로 →</button>
     <button class="dayend-restart" id="dayend-restart">처음으로 돌아가기</button>
   </div>
+</div>
 </div>
 
 <div id="back-confirm-modal" class="modal-overlay">
@@ -405,3 +448,5 @@ document.getElementById("rebirth-confirm").addEventListener("click",function(){r
 
 })();
 </script>
+</body>
+</html>
