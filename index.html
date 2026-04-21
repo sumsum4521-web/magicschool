@@ -1,0 +1,407 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  #game-root { min-height: 520px; font-family: var(--font-sans); }
+  .screen { display: none; } .screen.active { display: block; }
+  #lobby { text-align: center; padding: 2.5rem 1.5rem 2rem; background: linear-gradient(160deg, #EEEDFE 0%, #E1F5EE 100%); border-radius: var(--border-radius-lg); position: relative; }
+  .title-main { font-size: 28px; font-weight: 500; color: #3C3489; letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 6px; }
+  .title-sub { font-size: 13px; color: #534AB7; margin-bottom: 2rem; }
+  .stars { font-size: 20px; margin-bottom: 1.5rem; }
+  .lobby-btn { display: block; width: 220px; margin: 0 auto 12px; padding: 12px 0; border-radius: 999px; font-size: 15px; font-weight: 500; cursor: pointer; border: none; transition: transform 0.1s; }
+  .lobby-btn:active { transform: scale(0.97); }
+  .btn-play { background: #534AB7; color: #fff; }
+  .btn-chars { background: #fff; color: #3C3489; border: 1.5px solid #AFA9EC; }
+  .btn-cuts { background: #fff; color: #0F6E56; border: 1.5px solid #9FE1CB; }
+  .btn-intimacy { background: #fff; color: #993C1D; border: 1.5px solid #F5C4B3; }
+  .rebirth-btn { position: absolute; top: 12px; right: 12px; background: none; border: 1px solid #F0997B; border-radius: 999px; padding: 5px 12px; font-size: 12px; color: #993C1D; cursor: pointer; transition: background 0.1s; }
+  .rebirth-btn:hover { background: #FAECE7; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); align-items: center; justify-content: center; z-index: 99; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: var(--color-background-primary); border-radius: var(--border-radius-lg); padding: 1.5rem; width: 300px; }
+  .modal-step { display: none; } .modal-step.active { display: block; }
+  .modal-box p { font-size: 15px; font-weight: 500; margin-bottom: 12px; text-align: center; color: var(--color-text-primary); }
+  .modal-box .sub-p { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 14px; text-align: center; margin-top: -6px; }
+  .modal-box input { width: 100%; padding: 10px 12px; border-radius: var(--border-radius-md); border: 1px solid var(--color-border-secondary); font-size: 15px; margin-bottom: 12px; color: var(--color-text-primary); background: var(--color-background-primary); }
+  .modal-confirm { width: 100%; padding: 10px; background: #534AB7; color: #fff; border: none; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .gender-btns { display: flex; gap: 8px; margin-bottom: 12px; }
+  .gender-btn { flex: 1; padding: 14px 0; border-radius: var(--border-radius-lg); border: 1.5px solid var(--color-border-secondary); background: var(--color-background-primary); font-size: 22px; cursor: pointer; transition: border-color 0.1s, background 0.1s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .gender-btn span { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); }
+  .gender-btn.selected { border-color: #534AB7; background: #EEEDFE; }
+  .gender-btn.selected span { color: #534AB7; }
+  .gender-warn { display: none; background: #FAEEDA; border: 1px solid #EF9F27; border-radius: var(--border-radius-md); padding: 8px 10px; font-size: 11px; color: #633806; line-height: 1.5; margin-bottom: 12px; text-align: center; }
+  .gender-warn.show { display: block; }
+  .rebirth-box { background: var(--color-background-primary); border-radius: var(--border-radius-lg); padding: 1.5rem; width: 280px; text-align: center; }
+  .rebirth-box .rebirth-emoji { font-size: 32px; margin-bottom: 10px; }
+  .rebirth-box p { font-size: 14px; color: var(--color-text-primary); line-height: 1.6; margin-bottom: 8px; }
+  .rebirth-box .warn { font-size: 12px; color: #993C1D; margin-bottom: 16px; }
+  .rebirth-confirm { width: 100%; padding: 10px; background: #D85A30; color: #fff; border: none; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 8px; }
+  .rebirth-cancel { width: 100%; padding: 10px; background: none; color: var(--color-text-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: 999px; font-size: 14px; cursor: pointer; }
+  .back-confirm-box { background: var(--color-background-primary); border-radius: var(--border-radius-lg); padding: 1.5rem; width: 260px; text-align: center; }
+  .back-confirm-box .back-emoji { font-size: 28px; margin-bottom: 10px; }
+  .back-confirm-box p { font-size: 14px; color: var(--color-text-primary); line-height: 1.6; margin-bottom: 6px; }
+  .back-confirm-box .warn { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 16px; }
+  .back-go-btn { width: 100%; padding: 10px; background: #534AB7; color: #fff; border: none; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 8px; }
+  .back-cancel-btn { width: 100%; padding: 10px; background: none; color: var(--color-text-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: 999px; font-size: 14px; cursor: pointer; }
+  #chars, #cuts, #intimacy { padding: 1rem; }
+  .room-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+  .back-btn { background: none; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 6px 12px; font-size: 13px; cursor: pointer; color: var(--color-text-secondary); }
+  .room-title { font-size: 17px; font-weight: 500; color: var(--color-text-primary); }
+  .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .char-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 12px; text-align: center; }
+  .char-avatar { width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .char-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 3px; }
+  .char-tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; margin-bottom: 5px; background: #EEEDFE; color: #3C3489; }
+  .char-desc { font-size: 11px; color: var(--color-text-secondary); line-height: 1.5; }
+  .cuts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .cut-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px 12px; text-align: center; position: relative; }
+  .cut-card.unlocked { border-color: #9FE1CB; background: #E1F5EE; }
+  .cut-icon { font-size: 28px; margin-bottom: 6px; }
+  .cut-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 3px; }
+  .cut-name.hidden-text { color: var(--color-text-secondary); }
+  .cut-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 999px; margin-top: 4px; background: #9FE1CB; color: #085041; }
+  .cut-locked-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 999px; margin-top: 4px; background: var(--color-background-secondary); color: var(--color-text-secondary); }
+  .new-badge { position: absolute; top: 8px; right: 8px; background: #D85A30; color: #fff; font-size: 9px; font-weight: 500; padding: 2px 6px; border-radius: 999px; }
+  .intimacy-list { display: flex; flex-direction: column; gap: 10px; }
+  .intimacy-row { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+  .intimacy-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .intimacy-info { flex: 1; }
+  .intimacy-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 5px; }
+  .intimacy-bar-wrap { background: var(--color-background-secondary); border-radius: 999px; height: 8px; width: 100%; overflow: hidden; }
+  .intimacy-bar { height: 8px; border-radius: 999px; background: #534AB7; transition: width 0.4s; }
+  .intimacy-num { font-size: 12px; color: var(--color-text-secondary); white-space: nowrap; }
+  .special-ep-tag { font-size: 10px; padding: 2px 8px; border-radius: 999px; background: #FAEEDA; color: #854F0B; margin-left: 6px; }
+  #game { padding: 1rem; }
+  .scene-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .scene-header-left { display: flex; flex-direction: column; gap: 2px; }
+  .episode-label { font-size: 12px; color: var(--color-text-secondary); }
+  .episode-title { font-size: 16px; font-weight: 500; color: var(--color-text-primary); }
+  .game-back-btn { background: none; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 5px 10px; font-size: 12px; cursor: pointer; color: var(--color-text-secondary); white-space: nowrap; flex-shrink: 0; }
+  .game-back-btn:hover { background: var(--color-background-secondary); }
+  .scene-box { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 1rem 1.2rem; margin-bottom: 1rem; min-height: 80px; }
+  .scene-text { font-size: 14px; color: var(--color-text-primary); line-height: 1.75; }
+  .scene-text .pname { color: #534AB7; font-weight: 500; }
+  .choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
+  .choice-btn { background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-lg); padding: 12px 14px; text-align: left; font-size: 13px; cursor: pointer; color: var(--color-text-primary); transition: background 0.1s; }
+  .choice-btn:hover { background: #EEEDFE; border-color: #AFA9EC; }
+  .choice-btn.chosen { background: #EEEDFE; border-color: #534AB7; }
+  .choice-btn.disabled { opacity: 0.4; pointer-events: none; }
+  .result-box { display: none; background: #E1F5EE; border-left: 3px solid #1D9E75; border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0; padding: 10px 14px; font-size: 13px; color: #085041; line-height: 1.6; margin-bottom: 0.5rem; }
+  .result-box.show { display: block; }
+  .cut-notify { display: none; background: #E1F5EE; border: 1px solid #5DCAA5; border-radius: var(--border-radius-md); padding: 8px 12px; font-size: 12px; color: #085041; margin-bottom: 0.5rem; }
+  .cut-notify.show { display: block; }
+  .sub-choices { display: none; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
+  .sub-choices.show { display: flex; }
+  .sub-choice-btn { background: var(--color-background-primary); border: 1.5px solid #AFA9EC; border-radius: var(--border-radius-lg); padding: 10px 14px; text-align: left; font-size: 13px; cursor: pointer; color: #534AB7; font-weight: 500; }
+  .sub-choice-btn:hover { background: #EEEDFE; }
+  .sub-choice-btn.chosen { background: #EEEDFE; border-color: #534AB7; }
+  .sub-choice-btn.disabled { opacity: 0.4; pointer-events: none; }
+  .sub-result-box { display: none; background: #E6F1FB; border-left: 3px solid #378ADD; border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0; padding: 10px 14px; font-size: 13px; color: #0C447C; line-height: 1.6; margin-bottom: 0.5rem; }
+  .sub-result-box.show { display: block; }
+  .next-btn { background: #534AB7; color: #fff; border: none; border-radius: 999px; padding: 10px 24px; font-size: 14px; font-weight: 500; cursor: pointer; display: none; margin-top: 0.5rem; }
+  .next-btn.show { display: inline-block; }
+  .progress-dots { display: flex; gap: 6px; flex-wrap: wrap; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-border-secondary); transition: background 0.3s; }
+  .dot.done { background: #534AB7; } .dot.current { background: #9F9AE0; }
+  #dayend { padding: 1rem; }
+  .dayend-card { background: linear-gradient(160deg, #EEEDFE 0%, #E1F5EE 100%); border-radius: var(--border-radius-lg); padding: 2rem 1.5rem; text-align: center; margin-bottom: 1rem; }
+  .dayend-emoji { font-size: 36px; margin-bottom: 0.75rem; }
+  .dayend-title { font-size: 20px; font-weight: 500; color: #3C3489; margin-bottom: 8px; }
+  .dayend-msg { font-size: 13px; color: #534AB7; line-height: 1.7; white-space: pre-line; }
+  .dayend-next { width: 100%; padding: 13px; background: #534AB7; color: #fff; border: none; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; display: none; margin-bottom: 10px; }
+  .dayend-next.show { display: block; }
+  .dayend-restart { width: 100%; padding: 13px; background: none; color: #534AB7; border: 1px solid #AFA9EC; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; }
+</style>
+
+<div id="game-root">
+  <div id="lobby" class="screen active">
+    <button class="rebirth-btn" id="rebirth-btn">🔄 환생</button>
+    <div class="stars">✦ ✦ ✦</div>
+    <div class="title-main">마법학교생활</div>
+    <div class="title-main">선택 게임</div>
+    <div class="title-sub">당신만의 마법학교 이야기가 시작됩니다</div>
+    <button class="lobby-btn btn-play" id="play-btn">▶ 플레이</button>
+    <button class="lobby-btn btn-chars" id="chars-btn">👥 인물 소개</button>
+    <button class="lobby-btn btn-cuts" id="cuts-btn">✨ 특별컷 룸</button>
+    <button class="lobby-btn btn-intimacy" id="intimacy-btn">💛 친밀도 룸</button>
+  </div>
+  <div id="chars" class="screen">
+    <div class="room-header"><button class="back-btn" id="chars-back">← 뒤로</button><span class="room-title">등장인물 소개</span></div>
+    <div class="char-grid" id="char-grid"></div>
+  </div>
+  <div id="cuts" class="screen">
+    <div class="room-header"><button class="back-btn" id="cuts-back">← 뒤로</button><span class="room-title">✨ 특별컷 룸</span></div>
+    <div class="cuts-grid" id="cuts-grid"></div>
+  </div>
+  <div id="intimacy" class="screen">
+    <div class="room-header"><button class="back-btn" id="intimacy-back">← 뒤로</button><span class="room-title">💛 친밀도 룸</span></div>
+    <div class="intimacy-list" id="intimacy-list"></div>
+  </div>
+  <div id="game" class="screen">
+    <div class="scene-header">
+      <div class="scene-header-left">
+        <div class="episode-label" id="ep-label"></div>
+        <div class="episode-title" id="ep-title"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="progress-dots" id="dots"></div>
+        <button class="game-back-btn" id="game-back-btn">← 돌아가기</button>
+      </div>
+    </div>
+    <div class="scene-box"><p class="scene-text" id="scene-text"></p></div>
+    <div class="choices" id="choices"></div>
+    <div class="result-box" id="result-box"></div>
+    <div class="cut-notify" id="cut-notify"></div>
+    <div class="sub-choices" id="sub-choices"></div>
+    <div class="sub-result-box" id="sub-result-box"></div>
+    <div class="cut-notify" id="sub-cut-notify"></div>
+    <button class="next-btn" id="next-btn">다음 →</button>
+  </div>
+  <div id="dayend" class="screen">
+    <div class="dayend-card">
+      <div class="dayend-emoji" id="dayend-emoji">🌙</div>
+      <div class="dayend-title" id="dayend-title"></div>
+      <div class="dayend-msg" id="dayend-msg"></div>
+    </div>
+    <button class="dayend-next" id="dayend-next">다음 날로 →</button>
+    <button class="dayend-restart" id="dayend-restart">처음으로 돌아가기</button>
+  </div>
+</div>
+
+<div id="back-confirm-modal" class="modal-overlay">
+  <div class="back-confirm-box">
+    <div class="back-emoji">🏠</div>
+    <p>로비로 돌아갈까요?</p>
+    <div class="warn">진행 상황은 저장되지 않습니다.<br>특별컷·친밀도는 유지됩니다.</div>
+    <button class="back-go-btn" id="back-go-btn">돌아가기</button>
+    <button class="back-cancel-btn" id="back-cancel-btn">계속 하기</button>
+  </div>
+</div>
+
+<div id="name-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-step active" id="step-name">
+      <p>이름을 입력하세요!</p>
+      <input type="text" id="name-input" placeholder="나의 이름..." maxlength="8" />
+      <button class="modal-confirm" id="name-next-btn">다음 →</button>
+    </div>
+    <div class="modal-step" id="step-gender">
+      <p>성별을 선택하세요!</p>
+      <p class="sub-p" id="gender-sub"></p>
+      <div class="gender-btns">
+        <button class="gender-btn" id="gender-male" data-gender="male">👦<span>남자</span></button>
+        <button class="gender-btn" id="gender-female" data-gender="female">👧<span>여자</span></button>
+        <button class="gender-btn" id="gender-other" data-gender="other">🧒<span>기타</span></button>
+      </div>
+      <div class="gender-warn" id="gender-warn">⚠ 주의 ⚠ : 성별을 기타로 설정하면 특별 에피소드 몇 개를 볼 수 없습니다</div>
+      <button class="modal-confirm" id="gender-confirm-btn">시작하기</button>
+    </div>
+  </div>
+</div>
+
+<div id="rebirth-modal" class="modal-overlay">
+  <div class="rebirth-box">
+    <div class="rebirth-emoji">🔄</div>
+    <p>환생하면 새로운 삶이 시작됩니다.</p>
+    <div class="warn">특별컷과 친밀도가 모두 초기화됩니다!</div>
+    <button class="rebirth-confirm" id="rebirth-confirm">환생하기</button>
+    <button class="rebirth-cancel" id="rebirth-cancel">취소</button>
+  </div>
+</div>
+
+<script>
+(function(){
+
+var CHARS=[
+  {name:"시루아",emoji:"🐱",tag:"동물변신 마법",color:"#FAECE7",tcolor:"#993C1D",desc:"붉은 머리카락과 고양이 귀·꼬리. 밝고 친절한 여학생."},
+  {name:"루카",emoji:"💧",tag:"물·산소 마법",color:"#E6F1FB",tcolor:"#185FA5",desc:"파란 단정한 머리, 흰 목도리. 조용한 남학생. 아르의 단짝."},
+  {name:"헤이슨",emoji:"🧡",tag:"마음읽기 마법",color:"#FAEEDA",tcolor:"#854F0B",desc:"갈색 포니테일. 활발하고 덤벙거리는 장난꾸러기 남학생."},
+  {name:"크리아",emoji:"⚡",tag:"전기생성 마법",color:"#FAEEDA",tcolor:"#854F0B",desc:"노란 긴 머리, 흰 큰 리본. 소심하고 부끄러움 많은 여학생."},
+  {name:"아르",emoji:"🔥",tag:"불·시간 마법",color:"#FAECE7",tcolor:"#993C1D",desc:"검은 머리, 노란 눈동자, 회중시계. 조용하고 친절한 남학생. 루카의 단짝."},
+  {name:"유츠미",emoji:"🐺",tag:"치유·눈[Snow] 마법",color:"#E6F1FB",tcolor:"#185FA5",desc:"흰 단발, 은빛 늑대 귀와 꼬리. 도도하고 조용한 반수인 여학생."},
+  {name:"미챠 선생님",emoji:"📚",tag:"담임 선생님",color:"#EEEDFE",tcolor:"#3C3489",desc:"긴 검은 머리, 흰테 안경. 친절하고 똑똑한 담임 선생님."},
+  {name:"교장 선생님",emoji:"🌟",tag:"교장 선생님",color:"#E1F5EE",tcolor:"#0F6E56",desc:"길게 묶은 푸른빛 포니테일. 친절하고 예쁜 교장 선생님."},
+  {name:"엄마",emoji:"👩",tag:"플레이어의 엄마",color:"#FAECE7",tcolor:"#993C1D",desc:"검은 머리에 항상 앞치마를 두르고 다니는 엄마."},
+  {name:"아빠",emoji:"👨",tag:"플레이어의 아빠",color:"#E6F1FB",tcolor:"#185FA5",desc:"일이 많아서 아침 6시에 나가서 밤 8시에 들어오는 아빠."},
+  {name:"커피",emoji:"🐕",tag:"정문 경비견",color:"#EAF3DE",tcolor:"#3B6D11",desc:"검은 리트리버. 듬직한 수컷 경비원."},
+  {name:"모카",emoji:"🐶",tag:"후문 경비견",color:"#FAEEDA",tcolor:"#854F0B",desc:"갈색 리트리버. 후문을 지키는 암컷 경비원."},
+];
+var INTIMACY_CHARS=[
+  {name:"루카",emoji:"💧",color:"#E6F1FB"},{name:"헤이슨",emoji:"🧡",color:"#FAEEDA"},
+  {name:"시루아",emoji:"🐱",color:"#FAECE7"},{name:"크리아",emoji:"⚡",color:"#FAEEDA"},
+  {name:"아르",emoji:"🔥",color:"#FAECE7"},{name:"유츠미",emoji:"🐺",color:"#E6F1FB"},
+  {name:"미챠 선생님",emoji:"📚",color:"#EEEDFE"},{name:"교장 선생님",emoji:"🌟",color:"#E1F5EE"},
+  {name:"엄마",emoji:"👩",color:"#FAECE7"},{name:"아빠",emoji:"👨",color:"#E6F1FB"},
+];
+var SPECIAL_CUTS=[
+  {id:"luka_hello",char:"루카",name:"안녕?",emoji:"💧",unlocked:false,newFlag:false},
+  {id:"heyson_soccer",char:"헤이슨",name:"축구!",emoji:"🧡",unlocked:false,newFlag:false},
+  {id:"principal_help",char:"교장 선생님",name:"도움",emoji:"🌟",unlocked:false,newFlag:false},
+  {id:"soccer_all",char:"헤이슨, 유츠미, 크리아, 시루아",name:"함께 축구!",emoji:"⚽",unlocked:false,newFlag:false},
+];
+var INTIMACY={};
+INTIMACY_CHARS.forEach(function(c){INTIMACY[c.name]=0;});
+
+function resetPersistent(){
+  SPECIAL_CUTS.forEach(function(c){c.unlocked=false;c.newFlag=false;});
+  INTIMACY_CHARS.forEach(function(c){INTIMACY[c.name]=0;});
+}
+function unlockCut(id,notifyEl){
+  var cut=SPECIAL_CUTS.find(function(c){return c.id===id;});
+  if(!cut||cut.unlocked)return;
+  cut.unlocked=true;cut.newFlag=true;
+  cut.char.split(", ").forEach(function(ch){if(INTIMACY[ch]!==undefined&&INTIMACY[ch]<5)INTIMACY[ch]++;});
+  if(notifyEl){notifyEl.innerHTML="✨ 특별컷 해금! <b>"+cut.char+" - "+cut.name+"</b>";notifyEl.classList.add("show");}
+}
+
+var playerName="",playerGender="other";
+var currentEp=0,currentDay=0,chosen=false;
+var exploredFloor2=false,exploredFloor3=false,talkedToSirua=false;
+var chosenMagic="순간이동",saidYesToSoccer=false;
+var calledPrincipal=false,visitedPrincipal=false,talkedToLukaHello=false;
+var ALL_DAYS=[],DAY_TITLES=["첫째 날","둘째 날"];
+var selectedGender=null;
+
+function makeDay1(){return[
+  {label:"에피소드 1",title:"정문 앞의 관문",scene:function(n){return'마법학교 첫날! 두근거리는 마음으로 정문을 열려는데, 경비견 커피가 <b>왈왈!</b> 짖으며 앞을 가로막습니다. <span class="pname">'+n+'</span>, 어떻게 할까요?';},choices:[{text:"🪪 마법학교 입학증을 보여준다",result:function(){return"커피가 왈! 짖으며 자리를 비켜줍니다. 무사히 통과!";}},{text:"📞 교장 선생님한테 전화를 한다",result:function(){return"교장 선생님이 '입학증을 보여주면 돼요~' 라고 힌트를 주셨습니다. 무사히 통과!";},onChoose:function(){calledPrincipal=true;}}]},
+  {label:"에피소드 2",title:"미챠 선생님 반을 찾아라!",scene:function(n){return'정문을 통과하니 길고 문이 많은 1층 복도가 나옵니다. <span class="pname">'+n+'</span>, 어떻게 할까요?';},choices:[{text:"🚪 바로 앞 교장실로 들어간다",result:function(){return"교장 선생님이 '2층 엘리베이터 앞이에요!' 라고 알려주셨습니다.";},onChoose:function(){visitedPrincipal=true;if(calledPrincipal)unlockCut("principal_help",document.getElementById("cut-notify"));}},{text:"🔍 1층부터 4층까지 다 뒤져본다",result:function(){return"다리는 아프지만 끈기 있게 2층에서 반을 찾아냈습니다!";}},{text:"🗺️ 일단 1층을 둘러본다",result:function(){return"두 갈래 길 왼쪽에서 지도를 발견! 아주 똑똑하게 반을 찾아갔습니다.";}}]},
+  {label:"에피소드 3",title:"수업 시작 10분 전!",scene:function(n){return'교실 문을 열고 들어가니 헤이슨과 아르, 남학생 두 명이 먼저 와서 시끌벅적하게 수다를 떨고 있습니다. 남은 10분, <span class="pname">'+n+'</span>은 어떻게 보낼까요?';},choices:[{text:"📖 내 자리에서 가져온 책을 읽는다",result:function(){return"좋아하는 책에 푹 빠져 시간이 금방 지나갔습니다. 곧 수업 시간!";}},{text:"🚶 반에서 나가서 2층을 둘러본다",result:function(){return"화장실과 정수기 위치를 완벽하게 파악했습니다!";},onChoose:function(){exploredFloor2=true;}},{text:"😴 책상에 엎드려서 잔다",result:function(){return"깊게 자고 일어났는데 아직 8분밖에 안 지났습니다. 개운하게 수업을 맞이합니다!";}}]},
+  {label:"에피소드 4",title:"수업 시간이 되었다!",scene:function(n){return'드디어 수업이 시작됐습니다! 미챠 선생님이 자기소개 시간을 갖겠다고 합니다. <span class="pname">'+n+'</span>은 몇 번째로 할까요?';},choices:[{text:"💪 당당하게 첫 번째로 자기소개를 한다!",result:function(){return"친구들과 선생님이 박수를 쳐줍니다!";}},{text:"😌 중간 번째로 한다!",result:function(){return"평화롭게 자기소개를 마쳤습니다!";}},{text:"🙈 부끄러우니까 마지막으로 한다",result:function(){return"자존심이 조금 상하긴 했지만 부끄럽지 않게 마쳤습니다!";}}]},
+  {label:"에피소드 5",title:"첫 쉬는 시간!",scene:function(n){return'자기소개가 끝나고 선생님이 바로 쉬는 시간을 갖겠다고 합니다! <span class="pname">'+n+'</span>은 뭘 할까요?';},choices:[{text:"😴 책상에 엎드려서 잔다",result:function(){return"금세 쉬는 시간이 지나갔습니다!";}},{text:"🚽 화장실에 간다",result:function(){return exploredFloor2?"아까 화장실 위치를 파악해 놨기 때문에 쉽게 찾았습니다!":"화장실 찾는 데 10분, 볼일 보는 데 2분... 12분을 날렸습니다!";}},{text:'💬 반에 있는 여학생에게 말을 건다. "안녕?"',result:function(n){return'"안녕! 너 '+n+'맞지? 시루아야! 친하게 지내보자!" 시루아가 밝게 웃으며 대답해 줬습니다!';},onChoose:function(){talkedToSirua=true;}}]},
+  {label:"에피소드 6",title:"마법 등급 심사!",scene:function(n){return'쉬는 시간이 끝나고 마법 등급 심사를 한다고 합니다! <span class="pname">'+n+'</span>은 무슨 마법을 선보일까요?';},choices:[{text:"✨ 순간이동 마법을 선보인다",result:function(){return'"D등급입니다." F가 아니어서 다행이다!';},onChoose:function(){chosenMagic="순간이동";}},{text:"🔥 잘하진 않지만 등급 높은 불 마법을 선보인다",result:function(){return'"화염이 약하지만 등급 높은 마법이군요. +C입니다."';},onChoose:function(){chosenMagic="불";}},{text:"❄️ 매우 어렵지만 등급도 높은 눈(Snow) 마법을 선보인다",result:function(){return'"굳이 어려운 마법을 하려고 했네요. F입니다." 눈이 딱 손톱만큼밖에 안 떨어졌다!!';},onChoose:function(){chosenMagic="눈";}}]},
+  {label:"에피소드 7",title:"집에 가는 길",scene:function(n){return'오늘은 첫날이기 때문에 이렇게 수업을 마친다고 합니다. 집에 가는데 방향이 같은 친구가 있습니다. <span class="pname">'+n+'</span>, 어떻게 할까요?';},choices:[{text:"😶 무시하고 지나간다",result:function(){return"약간 후회되지만 그래도 집에 잘 도착했다.";}},{text:'👋 말을 걸어본다. "우리 같은 길이네?"',result:function(n){return talkedToSirua?'"어! '+n+'네? 우리 집 방향 똑같다!" 시루아와 함께 도란도란 집에 간다.':'"그러게, 난 시루아야." 어색하게 이야기를 나누며 집에 간다.';}}]}
+];}
+
+var ep5Normal={label:"에피소드 5",title:"2교시 끝 쉬는 시간!",scene:function(n){return'2교시가 끝나고 쉬는 시간이 되었다! <span class="pname">'+n+'</span>, 뭘 할까요?';},choices:[{text:'💬 내 앞에 앉아 아르와 대화 중인 루카에게 말을 건다. "루카!"',result:function(){return'"왜." 루카가 조용하고 쌀쌀맞게 대답했다. 뭐라고 할까?';},subChoices:[{text:"😶 아니야...",result:function(){return'"왜 말 건거야?" 루카는 나를 이상하게 바라보곤 다시 아르와 대화를 한다.';}},{text:"👋 안녕?",result:function(){return'"안녕." 루카는 손을 흔들어 인사를 하곤 다시 아르와 대화를 한다.';},onChoose:function(){talkedToLukaHello=true;unlockCut("luka_hello",document.getElementById("sub-cut-notify"));}}]},{text:"📖 앉아서 책을 본다",result:function(){return"내가 좋아하는 전설의 야모미 마법사의 책을 읽으니 시간이 빠르게 지나갔다!";}},{text:"📚 도서관에 간다",result:function(){return exploredFloor3?"아까 도서관을 찾았었기 때문에 쉽게 도서관에 가서 책을 읽었다!":'\"헥헥, 도서관이 어디지..?\" 겨우겨우 도서관을 찾고 10분을 날렸다...';}}]};
+var ep5Soccer={label:"에피소드 5",title:"쉬는 시간 — 축구!",scene:function(n){return'2교시가 끝나고 헤이슨과 축구를 하기로 한 쉬는 시간이 되었다! <span class="pname">'+n+'</span>, "누구랑 같이할래?"';},choices:[{text:'🧑 "당연히 남자애들이지! 루카랑 아르랑 같이하자!"',result:function(){return'"왜, 싫어. 우리 도서관 갈거야." 루카와 아르에게 거절당했다.. 결국 둘이서 했다.';}},{text:'👥 "다같이 하자! 시루아, 루카, 크리아, 아르, 유츠미! 일로와!"',result:function(){return'"싫어, 도서관 갈거야." 루카와 아르는 거절했지만 시루아와 크리아, 유츠미는 승낙했다!';},onChoose:function(){unlockCut("soccer_all",document.getElementById("cut-notify"));}},{text:'🌟 "나랑 친한 애들이랑! 시루아! 크리아, 너도 와!"',result:function(){return"친한 애들을 부르니 둘 다 좋다고 하며 함께 축구를 했다!";}}]};
+
+function makeDay2(){return[
+  {label:"에피소드 1",title:"마법 연습",scene:function(n){var e=chosenMagic==="불"?"🔥":chosenMagic==="눈"?"❄️":"✨";return'아침에 일어나서 학교 갈 준비를 마쳤습니다. <span class="pname">'+n+'</span>은 '+e+' '+chosenMagic+' 마법을 연습하려고 합니다. 어디서 할까요?';},choices:[{text:"🏠 집에서 한다",result:function(){return"엄마가 화를 냈지만 그래도 실력이 조금 늘었다.";}},{text:"🌿 마당에서 한다",result:function(){return"마당의 풀이 조금 밟히고 지저분해졌지만 실력이 약간 늘었다.";}},{text:"🚪 집 밖으로 나가서 한다",result:function(){return"남의 물건에 해를 입히지 않고 실력이 조금 늘었다.";}}]},
+  {label:"에피소드 2",title:"학교 도착! 10분 전",scene:function(n){return'연습을 마치고 학교에 도착했습니다. 오늘도 커피에게 입학증을 보여준 뒤 반으로 들어갑니다. 10분이 남았네요. <span class="pname">'+n+'</span>, 뭘 할까요?';},choices:[{text:"📚 3층에 가본다",result:function(){return"3층에서 도서관을 찾았다! 도서관 옆에는 보건실도 있다. 나중에 편리할 거다!";},onChoose:function(){exploredFloor3=true;}},{text:'💬 내 옆에 앉은 헤이슨에게 말을 건다. "안녕? 헤이슨!"',result:function(n){return'"'+n+', 안녕! 일찍 왔네? 쉬는 시간에 나랑 축구할래?" 헤이슨이 씩 웃으며 묻습니다.';},subChoices:[{text:"⚽ 좋아!",result:function(){return'"야호! 쉬는 시간에 보자!"';},onChoose:function(){saidYesToSoccer=true;unlockCut("heyson_soccer",document.getElementById("sub-cut-notify"));}},{text:"😅 괜찮아",result:function(){return'"그래? 아쉽다~" 헤이슨이 조금 아쉬운 표정을 지었지만 이내 웃었습니다.';},onChoose:function(){saidYesToSoccer=false;}}]},{text:"🪑 내 자리에서 가만히 앉아있는다",result:function(){return"아무 일도 없이 수업 시간이 되었습니다.";}}]},
+  {label:"에피소드 3",title:"1교시 — 마법 지팡이 고르기",scene:function(n){return'10분은 빠르게 지나고 1교시가 되었습니다! 마법 지팡이를 고른다고 합니다. <span class="pname">'+n+'</span>, 어떤 지팡이를 고를까요?';},choices:[{text:"🪄 핑쿠핑쿠 지팡이",result:function(){return"아이들이 조금 이상한 눈으로 쳐다보긴 하지만 능력을 +3 올려준다고 합니다.";}},{text:"🌿 그냥 나무 지팡이",result:function(){return"그냥 나무 지팡이입니다. 능력을 +1 올려준다고 하네요.";}},{text:"✨ 흰색에 푸른빛이 도는 지팡이",result:function(){return"영롱하게 생긴 지팡이입니다. 능력을 +5 올려준다고 합니다!";}}]},
+  {label:"에피소드 4",title:"2교시 — 지팡이로 마법 써보기",scene:function(n){var e=chosenMagic==="불"?"🔥":chosenMagic==="눈"?"❄️":"✨";return'2교시는 지팡이로 자신의 주마법을 한 번 써본다고 합니다. 선생님이 지팡이 다루는 방법을 알려주십니다. <span class="pname">'+n+'</span>, 그대로 할까요? (주마법: '+e+' '+chosenMagic+' 마법)';},choices:[{text:"📖 선생님을 따라한다",result:function(){return"선생님이 보여주시는 걸 따라하니 멋지게 나의 주마법을 쓸 수 있었다!";}},{text:"🌀 나만의 방법으로 해본다",result:function(){return"지팡이가 땅바닥에 떨어져 버렸다. 선생님한테 혼이 났다! 다시 따라했다..";}},{text:"🙅 아무것도 안한다",result:function(){return"선생님이 금방 알아채고 오늘 남긴다고 하십니다. 따라할걸!!";}}]},
+  {label:"에피소드 5",title:"쉬는 시간",isBranched:true},
+  {label:"에피소드 6",title:"3교시 — 도서관에서 마법책 읽기",scene:function(n){return'쉬는 시간은 빠르게 지나가고 어느덧 3교시입니다! 선생님이 3교시는 도서관에 가서 마법책을 읽고 마칠 거라고 합니다. 도서관에 가니 여러 가지 책이 있습니다. <span class="pname">'+n+'</span>, 어떤 책을 읽을까요?';},choices:[{text:"📕 내용이 어렵지만 지식이 많이 들어있는 마법백과사전",result:function(){return"마법 지식을 많이 얻었다. 나중부턴 마법을 더 잘하게 될 것이다!";}},{text:"📗 내가 좋아하는 리후의 마법여행",result:function(){return"리후의 마법여행에는 그냥 만화라 마법 지식이 하나도 없지만 재미있었다!";}},{text:"📘 친구들이 추천하는 소설 판타지라이프",result:function(){return"마법과 관련된 이야기는 없었지만 친구들이 많이 추천한 이유가 한눈에 보였다!";}}]},
+  {label:"에피소드 7",title:"집에 가는 길 — 아르와 루카",scene:function(n){return'오늘은 2째날이라 신기하게도 3교시로 끝낸다고 합니다..! (정말 놀랍) 집에 가고 있는데 옆에서 아르와 루카가 수다를 떨고 있는 게 보입니다. <span class="pname">'+n+'</span>, 말을 걸어볼까요?';},choices:[{text:'🔥 말을 건다. "안녕? 우리 길이 똑같네." (아르에게)',result:function(){return'"... 도서관 가는거야." 아르가 조용히 대답하곤 루카와 함께 뛰어갑니다.';}},{text:'💧 말을 건다. "안녕? 우리 길이 똑같네." (루카에게)',result:function(n){return talkedToLukaHello?'"오, 안녕. '+n+'. 나 아르랑 도서관 가야해서... 잘있어." 소심하게 대답을 건넨 루카는 아르와 함께 자리를 벗어납니다.':'"그러네. 오해하지마. 도서관 가는거니까." 루카가 대답하곤 빠른 걸음으로 자리에서 벗어납니다.';}},{text:"😶 무시한다",result:function(){return"아무 일도 없었습니다...";}}]},
+  {label:"에피소드 8",title:"저녁 식사 — 어디서 먹을까?",scene:function(n){return'3교시에 학교가 끝나서 배고픈 <span class="pname">'+n+'</span>, 음식점에서 밥을 먹으려고 합니다. 어디서 먹을까요?';},choices:[
+    {text:"🌶️ 매콤분식",result:function(){return'핵매운 떡볶이를 주문해서 먹고 있는데... "으아!!!! 너무 매워!!" 결국 떡볶이를 포기하고 어묵과 김밥을 먹습니다.';}},
+    {text:"🍱 지윤네 돈가스",result:function(){return'돈가스를 시키고 자리에 앉았는데... \'딸랑딸랑\' \'유, 유츠미..!(속으로)\' 유츠미가 들어왔습니다. 둘은 서로를 모른 척 하고 어색하게 먹습니다,,,';  }},
+    {text:"🥩 할아버지 보쌈",result:function(){return'보쌈을 맛있게 먹고 있는데... 주변을 둘러보니 온통 할머니 할아버지밖에 없습니다. 뻘쭘하게 보쌈을 먹고 나옵니다...';}}
+  ]}
+];}
+
+function showScreen(id){document.querySelectorAll(".screen").forEach(function(s){s.classList.remove("active");});document.getElementById(id).classList.add("active");}
+function showChars(){document.getElementById("char-grid").innerHTML=CHARS.map(function(c){return'<div class="char-card"><div class="char-avatar" style="background:'+c.color+'">'+c.emoji+'</div><div class="char-name">'+c.name+'</div><div class="char-tag" style="background:'+c.color+';color:'+c.tcolor+'">'+c.tag+'</div><div class="char-desc">'+c.desc+'</div></div>';}).join("");showScreen("chars");}
+function showCuts(){document.getElementById("cuts-grid").innerHTML=SPECIAL_CUTS.map(function(c){return'<div class="cut-card'+(c.unlocked?' unlocked':'')+'">'+( c.newFlag?'<div class="new-badge">NEW</div>':'')+' <div class="cut-icon">'+c.emoji+'</div><div class="cut-name'+(c.unlocked?'':' hidden-text')+'">'+(c.unlocked?c.char+' - '+c.name:c.char+' - '+'*'.repeat(c.name.length))+'</div>'+(c.unlocked?'<div class="cut-badge">해금 완료</div>':'<div class="cut-locked-badge">🔒 미해금</div>')+'</div>';}).join("");SPECIAL_CUTS.forEach(function(c){c.newFlag=false;});showScreen("cuts");}
+function showIntimacy(){document.getElementById("intimacy-list").innerHTML=INTIMACY_CHARS.map(function(c){var val=INTIMACY[c.name]||0,pct=(val/5)*100,atMax=val>=5;return'<div class="intimacy-row"><div class="intimacy-avatar" style="background:'+c.color+'">'+c.emoji+'</div><div class="intimacy-info"><div class="intimacy-name">'+c.name+(atMax?'<span class="special-ep-tag">특별 에피소드 해금!</span>':'')+'</div><div class="intimacy-bar-wrap"><div class="intimacy-bar" style="width:'+pct+'%"></div></div></div><div class="intimacy-num">'+val+' / 5</div></div>';}).join("");showScreen("intimacy");}
+
+function openNameModal(){
+  document.getElementById("step-name").classList.add("active");
+  document.getElementById("step-gender").classList.remove("active");
+  selectedGender=null;
+  document.querySelectorAll(".gender-btn").forEach(function(b){b.classList.remove("selected");});
+  document.getElementById("gender-warn").classList.remove("show");
+  document.getElementById("name-modal").classList.add("open");
+  setTimeout(function(){document.getElementById("name-input").focus();},50);
+}
+document.getElementById("name-next-btn").addEventListener("click",function(){
+  var v=document.getElementById("name-input").value.trim();if(!v)return;
+  document.getElementById("gender-sub").textContent='"'+v+'"의 성별을 선택해 주세요!';
+  document.getElementById("step-name").classList.remove("active");
+  document.getElementById("step-gender").classList.add("active");
+});
+document.getElementById("name-input").addEventListener("keydown",function(e){
+  if(e.key==="Enter"){var v=document.getElementById("name-input").value.trim();if(!v)return;
+    document.getElementById("gender-sub").textContent='"'+v+'"의 성별을 선택해 주세요!';
+    document.getElementById("step-name").classList.remove("active");
+    document.getElementById("step-gender").classList.add("active");}
+});
+document.querySelectorAll(".gender-btn").forEach(function(btn){
+  btn.addEventListener("click",function(){
+    document.querySelectorAll(".gender-btn").forEach(function(b){b.classList.remove("selected");});
+    btn.classList.add("selected");selectedGender=btn.getAttribute("data-gender");
+    document.getElementById("gender-warn").classList[selectedGender==="other"?"add":"remove"]("show");
+  });
+});
+document.getElementById("gender-confirm-btn").addEventListener("click",function(){if(!selectedGender)return;startGame();});
+
+function startGame(){
+  var v=document.getElementById("name-input").value.trim();
+  playerName=v||"나";playerGender=selectedGender||"other";
+  document.getElementById("name-modal").classList.remove("open");
+  currentEp=0;currentDay=0;chosen=false;
+  exploredFloor2=false;exploredFloor3=false;talkedToSirua=false;
+  chosenMagic="순간이동";saidYesToSoccer=false;
+  calledPrincipal=false;visitedPrincipal=false;talkedToLukaHello=false;
+  ALL_DAYS=[makeDay1(),makeDay2()];
+  loadEpisode();showScreen("game");
+}
+
+function getEp(){var ep=ALL_DAYS[currentDay][currentEp];if(ep&&ep.isBranched)return saidYesToSoccer?ep5Soccer:ep5Normal;return ep;}
+function loadEpisode(){
+  chosen=false;var ep=getEp();
+  document.getElementById("ep-label").textContent=DAY_TITLES[currentDay]+" · "+ep.label;
+  document.getElementById("ep-title").textContent=ep.title;
+  document.getElementById("scene-text").innerHTML=ep.scene(playerName);
+  document.getElementById("choices").innerHTML=ep.choices.map(function(c,i){return'<button class="choice-btn" data-idx="'+i+'">'+c.text+'</button>';}).join("");
+  document.querySelectorAll(".choice-btn").forEach(function(btn){btn.addEventListener("click",function(){choose(parseInt(btn.getAttribute("data-idx")));});});
+  document.getElementById("result-box").classList.remove("show");
+  document.getElementById("cut-notify").classList.remove("show");document.getElementById("cut-notify").innerHTML="";
+  document.getElementById("sub-choices").classList.remove("show");document.getElementById("sub-choices").innerHTML="";
+  document.getElementById("sub-result-box").classList.remove("show");
+  document.getElementById("sub-cut-notify").classList.remove("show");document.getElementById("sub-cut-notify").innerHTML="";
+  document.getElementById("next-btn").classList.remove("show");
+  renderDots();
+}
+function renderDots(){document.getElementById("dots").innerHTML=ALL_DAYS[currentDay].map(function(_,i){return'<div class="dot '+(i<currentEp?'done':i===currentEp?'current':'')+'"></div>';}).join("");}
+function choose(idx){
+  if(chosen)return;chosen=true;var ep=getEp();
+  if(ep.choices[idx].onChoose)ep.choices[idx].onChoose();
+  document.querySelectorAll(".choice-btn").forEach(function(b,i){b.classList.add("disabled");if(i===idx)b.classList.add("chosen");});
+  document.getElementById("result-box").innerHTML="✅ "+ep.choices[idx].result(playerName);
+  document.getElementById("result-box").classList.add("show");
+  if(ep.choices[idx].subChoices){
+    var sc=document.getElementById("sub-choices"),subs=ep.choices[idx].subChoices;
+    sc.innerHTML=subs.map(function(s,i){return'<button class="sub-choice-btn" data-sidx="'+i+'">'+s.text+'</button>';}).join("");
+    sc.classList.add("show");
+    sc.querySelectorAll(".sub-choice-btn").forEach(function(btn){btn.addEventListener("click",function(){
+      var sidx=parseInt(btn.getAttribute("data-sidx"));
+      sc.querySelectorAll(".sub-choice-btn").forEach(function(b,i){b.classList.add("disabled");if(i===sidx)b.classList.add("chosen");});
+      if(subs[sidx].onChoose)subs[sidx].onChoose();
+      document.getElementById("sub-result-box").innerHTML="💬 "+subs[sidx].result(playerName);
+      document.getElementById("sub-result-box").classList.add("show");
+      document.getElementById("next-btn").classList.add("show");
+    });});
+  } else {document.getElementById("next-btn").classList.add("show");}
+}
+function nextEpisode(){if(currentEp<ALL_DAYS[currentDay].length-1){currentEp++;loadEpisode();}else showDayEnd();}
+function showDayEnd(){
+  var t=DAY_TITLES[currentDay];
+  document.getElementById("dayend-emoji").textContent=currentDay===0?"🌙":"⭐";
+  document.getElementById("dayend-title").textContent=playerName+"의 "+t+"이 끝났습니다!";
+  document.getElementById("dayend-msg").textContent="마법학교 "+t+"이 무사히 지나갔습니다.\n내일은 또 어떤 일이 기다리고 있을까요?";
+  var nb=document.getElementById("dayend-next");
+  if(currentDay<ALL_DAYS.length-1){nb.textContent=DAY_TITLES[currentDay+1]+"로 넘어가기 →";nb.classList.add("show");}
+  else nb.classList.remove("show");
+  showScreen("dayend");
+}
+function goNextDay(){currentDay++;currentEp=0;loadEpisode();showScreen("game");}
+
+document.getElementById("game-back-btn").addEventListener("click",function(){document.getElementById("back-confirm-modal").classList.add("open");});
+document.getElementById("back-cancel-btn").addEventListener("click",function(){document.getElementById("back-confirm-modal").classList.remove("open");});
+document.getElementById("back-go-btn").addEventListener("click",function(){document.getElementById("back-confirm-modal").classList.remove("open");document.getElementById("name-input").value="";showScreen("lobby");});
+document.getElementById("play-btn").addEventListener("click",openNameModal);
+document.getElementById("chars-btn").addEventListener("click",showChars);
+document.getElementById("cuts-btn").addEventListener("click",showCuts);
+document.getElementById("intimacy-btn").addEventListener("click",showIntimacy);
+document.getElementById("chars-back").addEventListener("click",function(){showScreen("lobby");});
+document.getElementById("cuts-back").addEventListener("click",function(){showScreen("lobby");});
+document.getElementById("intimacy-back").addEventListener("click",function(){showScreen("lobby");});
+document.getElementById("next-btn").addEventListener("click",nextEpisode);
+document.getElementById("dayend-next").addEventListener("click",goNextDay);
+document.getElementById("dayend-restart").addEventListener("click",function(){document.getElementById("name-input").value="";showScreen("lobby");});
+document.getElementById("rebirth-btn").addEventListener("click",function(){document.getElementById("rebirth-modal").classList.add("open");});
+document.getElementById("rebirth-cancel").addEventListener("click",function(){document.getElementById("rebirth-modal").classList.remove("open");});
+document.getElementById("rebirth-confirm").addEventListener("click",function(){resetPersistent();document.getElementById("rebirth-modal").classList.remove("open");document.getElementById("name-input").value="";});
+
+})();
+</script>
